@@ -1,0 +1,80 @@
+package control;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import model.Admin;
+import model.User;
+import DAO.UserDAO;
+
+@WebServlet("/login")
+public class loginServlet extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+
+	public loginServlet() {
+		super();
+
+	}
+
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+
+		if (request.getSession().getAttribute("user") != null ) {
+			RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/welcome.jsp");
+			dispatcher.include(request, response);
+		} else {
+			
+			RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/login.jsp");
+			dispatcher.include(request, response);
+		}
+	}
+
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+
+		RequestDispatcher dispatcher;
+
+		String username = request.getParameter("username");
+		String password = request.getParameter("password");
+
+		UserDAO userDAO = new UserDAO();
+
+		try {
+
+			User user = userDAO.checkLogin(username, password);
+
+			if (user != null) {
+
+				HttpSession session = request.getSession();
+				session.setAttribute("user", user);
+				if (user instanceof Admin) {
+					System.out.println("admin :)");
+				}
+				dispatcher = request.getRequestDispatcher("/WEB-INF/welcome.jsp");
+				dispatcher.forward(request, response);
+
+			} else {
+
+				PrintWriter out = response.getWriter();
+
+				dispatcher = request.getRequestDispatcher("/WEB-INF/login.jsp");
+				dispatcher.include(request, response);
+
+				out.print("<center><h2> Incorect user or password !!<h2>");
+			}
+
+		} catch (InstantiationException | IllegalAccessException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+}
